@@ -1,25 +1,94 @@
+const finalScore = document.querySelector('.final-score > span');
+const score = document.querySelector('.score--value');
+const menu = document.querySelector('.menu-screen');
+const buttonPlay = document.querySelector('.btn-play');
+
+
 const canvas = document.querySelector('canvas');
+
 const ctx = canvas.getContext('2d');
 
-function gerarNumeroAleatorio(min, max) {
-  return Math.random() * (max - min + 1) + min;
+const audio = new Audio('audio.mp3');
+
+const incrementScore = () => {
+  score.innerText = +score.innerText + 10;
 }
+
+
+const randomNumber = (min, max) => {
+  return Math.round(Math.random() * (max - min) + min);
+}
+
+const randomPosition = () => {
+  const number = randomNumber(0, canvas.width - pixelSize);
+  return Math.round(number / 30) * 30;
+}
+
+
+const initialPosition = { x: 270, y: 240 };
 
 const pixelSize = 30;
 
-const snake = [
-  { x: 0, y: 0 }
-];
+let snake = [initialPosition];
 
 const food = {
-  x: 90,
-  y: 90,
+  x: randomPosition(),
+  y: randomPosition(),
   color: 'yellow'
 };
 
 
 let direction, loopId;
 
+
+const checkEat = () => {
+  const head = snake[snake.length - 1];
+
+  if (head.x == food.x && head.y == food.y){
+    incrementScore();
+    snake.push(head); 
+    audio.play();
+
+    let X = randomPosition();
+    let Y = randomPosition();
+
+    while (snake.find((position) => position.x == X && position.y == Y)) {
+      let x = randomPosition();
+      let y = randomPosition();
+    }
+
+    food.x = X;
+    food.y = Y;
+
+
+  }
+}
+
+const checkCollision = () => {
+  const head = snake[snake.length - 1];
+  const canvasLimit = canvas.width - pixelSize;
+  const neckIndex = snake.length - 2;
+
+  const wallCollision = head.x < 0 || head.x > canvasLimit || head.y < 0 || head.y > canvasLimit;
+    
+  const selfCollision = snake.find((position, index) => {
+    return index < neckIndex && position.x == head.x && position.y == head.y;
+  })
+
+  if (selfCollision || wallCollision) {
+    gameOver();
+  }
+  
+
+}
+
+const gameOver = () => {
+  direction = undefined;
+
+  menu.style.display = 'flex';
+  finalScore.innerText = score.textContent;
+  canvas.style.filter = 'blur(2px)';
+}
 
 const drawSnake = () => {
 
@@ -91,11 +160,13 @@ const gameLoop = () => {
   clearInterval(loopId);
 
 
-  ctx.clearRect(0, 0, 690, 690);
+  ctx.clearRect(0, 0, 600, 600);
   drawGrid();
   moveSnake();
   drawSnake();
   drawFood();
+  checkEat();
+  checkCollision();
 
   loopId = setTimeout(() => {
     gameLoop()
@@ -125,4 +196,15 @@ document.addEventListener('keydown', ({ key }) => {
   }
   
 
+})
+
+buttonPlay.addEventListener('click', () => {
+  score.innerText = '00';
+  menu.style.display = 'none';
+  canvas.style.filter = 'none';
+
+  food.x = randomPosition();
+  food.y = randomPosition();
+  
+  snake = [initialPosition];
 })
